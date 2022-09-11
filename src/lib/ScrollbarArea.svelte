@@ -1,5 +1,7 @@
+<!--suppress CheckEmptyScriptTag -->
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
+  import { nanoid } from 'nanoid';
 
   let contentArea: HTMLDivElement;
   let scrollbarTrack: HTMLDivElement;
@@ -10,6 +12,8 @@
   let isDragging = false;
   let scrollStartPosition = 0;
   let initialScrollTop = 0;
+  let scrollPosition = 0;
+  const viewportID = nanoid();
 
   function handleWheel(evt: WheelEvent) {
     evt.preventDefault();
@@ -33,6 +37,7 @@
     const { clientHeight: trackHeight } = scrollbarTrack;
     const newTop = Math.min((contentTop / contentHeight) * trackHeight, trackHeight - thumbHeight);
     scrollbarThumb.style.top = `${newTop}px`;
+    scrollPosition = (scrollbarThumb.offsetTop / Math.floor(trackHeight - thumbHeight)) * 100;
   }
 
   function handleTrackClick(evt: MouseEvent) {
@@ -107,11 +112,22 @@
   on:pointermove={handleThumbPointerMove}
 >
   <div class="ScrollbarArea__wrapper">
-    <div class="ScrollbarArea__content" bind:this={contentArea} on:scroll={handleThumbPosition}>
+    <div
+      class="ScrollbarArea__viewport"
+      id={viewportID}
+      bind:this={contentArea}
+      on:scroll={handleThumbPosition}
+      role="document"
+    >
       <slot />
     </div>
   </div>
-  <div class="ScrollbarArea__scrollbar">
+  <div
+    class="ScrollbarArea__scrollbar"
+    role="scrollbar"
+    aria-controls={viewportID}
+    aria-valuenow={scrollPosition}
+  >
     <div
       class="ScrollbarArea__scrollbar-track"
       bind:this={scrollbarTrack}
@@ -146,7 +162,7 @@
       border-radius: 10px;
     }
 
-    &__content {
+    &__viewport {
       position: relative;
       height: 100%;
       display: flex;
